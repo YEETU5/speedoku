@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speedoku</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            /* Background image settings */
+            background-image: url('background.png');
+            background-size: cover;       /* Make image cover entire background */
+            background-position: center;  /* Center the image */
+            background-repeat: no-repeat; /* Prevent tiling */
+        }
+
+        img {
+            max-width: 500px; /* Adjust size as needed */
+            margin-bottom: 50px;
+        }
+
+        button {
+            padding: 50px 100px;
+            font-size: 36px;
+            background-color: rgba(0, 0, 0, 0.7); /* Slight transparency to see background */
+            color: white;
+            border: 5px solid #D32F42;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: rgba(48, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <img src="Speed sudoku-logo-transparent.png" alt="Speed Sudoku Logo">
+    <button onclick="location.href='speedoku 3.2.html'">Play</button>
+</body>
+</html>

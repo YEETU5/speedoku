@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Speedoku</title>
+    <style>
+      :root {
+        --red: #c93445;
+        --dark: #111;
+        --panel: rgba(0, 0, 0, 0.5);
+      }
+      body {
+        font-family: Inter, Arial, Helvetica, sans-serif;
+        background-image: url("background.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        gap: 36px;
+        padding: 36px;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+      #menu {
+        border: 3px solid var(--red);
+        border-radius: 22px;
+        padding: 24px;
+        width: 220px;
+        text-align: center;
+        background: var(--panel);
+        backdrop-filter: blur(4px);
+      }
+      #menu h2 {
+        margin: 0 0 12px;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 10px 12px;
+        margin: 10px 0;
+        font-weight: 700;
+        color: white;
+        background: #491317;
+        border: 2px solid #d32f42;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      #gameBox {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 3px solid var(--red);
+        border-radius: 20px;
+        padding: 18px;
+        background: rgba(0, 0, 0, 0.6);
+        width: 520px;
+      }
+      #levelBox {
+        border: 3px solid var(--red);
+        padding: 10px 22px;
+        border-radius: 14px;
+        margin-bottom: 14px;
+        text-align: center;
+        font-size: 18px;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      #sudoku {
+        display: grid;
+        grid-template-columns: repeat(9, 48px);
+        grid-template-rows: repeat(9, 48px);
+        gap: 0;
+        background: #000;
+        padding: 10px;
+        border-radius: 6px;
+        box-shadow: inset 0 0 0 3px #111;
+      }
+      input.cell {
+        width: 48px;
+        height: 48px;
+        text-align: center;
+        font-size: 20px;
+        border: 1px solid #333;
+        background: #000;
+        color: #fff;
+        outline: none;
+      }
+      input.cell.given {
+        background: #111;
+        color: #bbb;
+        font-weight: 700;
+      }
+      input.cell.correct {
+        background: #052a05;
+      }
+      input.cell.wrong {
+        animation: shake 0.25s;
+      }
+      .bold-top {
+        border-top: 3px solid #fff;
+      }
+      .bold-left {
+        border-left: 3px solid #fff;
+      }
+      .bold-right {
+        border-right: 3px solid #fff;
+      }
+      .bold-bottom {
+        border-bottom: 3px solid #fff;
+      }
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-4px);
+        }
+        50% {
+          transform: translateX(4px);
+        }
+        75% {
+          transform: translateX(-3px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+      #bottomBar {
+        margin-top: 18px;
+        padding: 14px;
+        width: 92%;
+        border: 2px solid var(--red);
+        border-radius: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      #hearts span {
+        font-size: 26px;
+        margin-right: 6px;
+        color: #ff3b3b;
+      }
+      #timer {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      #scoreBoard {
+        margin-top: 10px;
+        font-size: 16px;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 6px 10px;
+        border-radius: 8px;
+      }
+      #art {
+        position: relative;
+        margin-left: 6px;
+      }
+      #art img {
+        width: 220px;
+        border-radius: 14px;
+        border: 3px solid var(--red);
+      }
+      #leaderboardBox {
+        border: 3px solid var(--red);
+        border-radius: 20px;
+        padding: 18px;
+        width: 300px;
+        background: rgba(0, 0, 0, 0.5);
+        color: #ffffff;
+        text-align: center;
+        max-height: 600px;
+        overflow-y: auto;
+      }
+      #leaderboardBox h3 {
+        margin-top: 0;
+      }
+      #leaderboardList {
+        list-style: none;
+        padding-left: 0;
+        margin-top: 10px;
+        font-size: 16px;
+        text-align: left;
+      }
+      #leaderboardList li {
+        margin: 6px 0;
+        display: flex;
+        justify-content: space-between;
+      }
+      @media (max-width: 1200px) {
+        body {
+          flex-direction: column;
+          align-items: center;
+        }
+        #gameBox {
+          width: 95%;
+        }
+        #leaderboardBox,
+        #art {
+          margin-left: 0;
+          margin-top: 20px;
+        }
+      }
+      #logo {
+        position: fixed;
+        top: -50px;
+        left: 5px;
+        width: 220px;
+        height: auto;
+        z-index: 1000;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <img
+      id="logo"
+      src="Speed sudoku-logo-transparent.png"
+      alt="Speed Sudoku Logo"
+    />
+
+    <div id="menu">
+      <h2>Speed sudoku</h2>
+      <button id="startBtn" class="btn">START</button>
+      <button id="restartBtn" class="btn">RESTART</button>
+      <button id="quitBtn" class="btn">QUIT</button>
+      <div style="margin-top: 8px; font-size: 14px; opacity: 0.9">
+        Tip: faster solves = more points
+      </div>
+    </div>
+
+    <div id="gameBox">
+      <div id="levelBox">
+        Level <span id="level">1</span><br />Points: <span id="points">0</span>
+      </div>
+      <div id="sudoku"></div>
+      <div id="bottomBar">
+        <div id="hearts"></div>
+        <div id="timer">Time 0:00</div>
+      </div>
+      <div id="scoreBoard">
+        Moves: <span id="moves">0</span> &nbsp;|&nbsp; Mistakes:
+        <span id="mistakes">0</span>
+      </div>
+    </div>
+
+    <div id="leaderboardBox">
+      <h3>Leaderboard</h3>
+      <button
+        id="resetLeaderboardBtn"
+        class="btn"
+        style="
+          background: #491317;
+          border: 2px solid #d32f42;
+          color: white;
+          border-radius: 8px;
+          padding: 6px 10px;
+          font-weight: 700;
+          cursor: pointer;
+          margin-top: 10px;
+        "
+      >
+        RESET LEADERBOARD
+      </button>
+      <ul id="leaderboardList"></ul>
+    </div>
+
+    <script>
+      let level = 1;
+      let points = 0;
+      let lives = 5;
+      let mistakes = 0;
+      let moves = 0;
+      let timerInterval = null;
+      let seconds = 0;
+      let started = false;
+      let solution = [];
+      let puzzle = [];
+      let editableCells = [];
+
+      const sudokuEl = document.getElementById("sudoku");
+      const levelEl = document.getElementById("level");
+      const pointsEl = document.getElementById("points");
+      const heartsEl = document.getElementById("hearts");
+      const timerEl = document.getElementById("timer");
+      const startBtn = document.getElementById("startBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const quitBtn = document.getElementById("quitBtn");
+      const movesEl = document.getElementById("moves");
+      const mistakesEl = document.getElementById("mistakes");
+
+      function setBoardEnabled(enabled) {
+        editableCells.forEach((cell) => {
+          cell.disabled = !enabled;
+        });
+      }
+
+      function updateHearts() {
+        heartsEl.innerHTML = "";
+        for (let i = 0; i < lives; i++) heartsEl.innerHTML += "<span>❤</span>";
+      }
+
+      function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${m}:${sec.toString().padStart(2, "0")}`;
+      }
+
+      function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          seconds++;
+          timerEl.textContent = "Time " + formatTime(seconds);
+        }, 1000);
+      }
+
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function solve(grid) {
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (grid[r][c] === 0) {
+              for (let n = 1; n <= 9; n++) {
+                if (isSafe(grid, r, c, n)) {
+                  grid[r][c] = n;
+                  if (solve(grid)) return true;
+                  grid[r][c] = 0;
+                }
+              }
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      function isSafe(grid, r, c, n) {
+        for (let i = 0; i < 9; i++)
+          if (grid[r][i] === n || grid[i][c] === n) return false;
+        const br = Math.floor(r / 3) * 3,
+          bc = Math.floor(c / 3) * 3;
+        for (let i = 0; i < 3; i++)
+          for (let j = 0; j < 3; j++)
+            if (grid[br + i][bc + j] === n) return false;
+        return true;
+      }
+
+      function generateFull() {
+        const g = Array.from({ length: 9 }, () => Array(9).fill(0));
+        for (let k = 0; k < 3; k++) {
+          const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+          for (let i = 0; i < 3; i++)
+            for (let j = 0; j < 3; j++)
+              g[k * 3 + i][k * 3 + j] = nums[i * 3 + j];
+        }
+        solve(g);
+        return g;
+      }
+
+      function makePuzzle(full, holes) {
+        const p = full.map((r) => r.slice());
+        const cells = [];
+        for (let r = 0; r < 9; r++)
+          for (let c = 0; c < 9; c++) cells.push([r, c]);
+        shuffle(cells);
+        let removed = 0;
+        for (const [r, c] of cells) {
+          if (removed >= holes) break;
+          p[r][c] = 0;
+          removed++;
+        }
+        return p;
+      }
+
+      function levelHoles(lvl) {
+        return Math.min(60, 36 + (lvl - 1) * 4);
+      }
+
+      function newGame(currLevel) {
+        stopTimer();
+        seconds = 0;
+        started = false;
+        moves = 0;
+        mistakes = 0;
+        lives = 5;
+        level = currLevel || level;
+        levelEl.textContent = level;
+        pointsEl.textContent = points;
+        movesEl.textContent = moves;
+        mistakesEl.textContent = mistakes;
+        updateHearts();
+        timerEl.textContent = "Time 0:00";
+        sudokuEl.innerHTML = "";
+        editableCells = [];
+
+        solution = generateFull();
+        const holes = levelHoles(level);
+        puzzle = makePuzzle(solution, holes);
+
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            const inp = document.createElement("input");
+            inp.type = "text";
+            inp.maxLength = 1;
+            inp.classList.add("cell");
+            if (r % 3 === 0) inp.classList.add("bold-top");
+            if (c % 3 === 0) inp.classList.add("bold-left");
+            if (c === 8) inp.classList.add("bold-right");
+            if (r === 8) inp.classList.add("bold-bottom");
+            const val = puzzle[r][c];
+            if (val !== 0) {
+              inp.value = val;
+              inp.disabled = true;
+              inp.classList.add("given");
+            } else {
+              inp.value = "";
+              inp.addEventListener("input", onInput);
+              inp.dataset.r = r;
+              inp.dataset.c = c;
+              editableCells.push(inp);
+              inp.disabled = true; // disable until start is pressed
+            }
+            sudokuEl.appendChild(inp);
+          }
+        }
+      }
+
+      function onInput(e) {
+        const el = e.target;
+        const v = el.value.replace(/[^1-9]/g, "").slice(0, 1);
+        el.value = v;
+        moves++;
+        movesEl.textContent = moves;
+        if (!v) return;
+        const r = parseInt(el.dataset.r),
+          c = parseInt(el.dataset.c),
+          n = parseInt(v);
+        if (solution[r][c] === n) {
+          el.classList.remove("wrong");
+          el.classList.add("correct");
+          el.disabled = true;
+          const base = 100;
+          const timeFactor = Math.max(1, (120 - seconds) / 60 + 1);
+          const levelFactor = 1 + (level - 1) * 0.15;
+          const gained = Math.round(base * timeFactor * levelFactor);
+          points += gained;
+          pointsEl.textContent = points;
+          checkWin();
+        } else {
+          el.classList.add("wrong");
+          setTimeout(() => el.classList.remove("wrong"), 300);
+          mistakes++;
+          mistakesEl.textContent = mistakes;
+          lives--;
+          updateHearts();
+          if (lives <= 0) {
+            stopTimer();
+            started = false;
+            alert("Game over! You lost all lives. Points: " + points);
+            if (points > 0) {
+              const playerName =
+                prompt("Enter your name for the leaderboard:", "Player") ||
+                "Player";
+              saveLeaderboard(playerName, points, formatTime(seconds), level);
+            }
+            level = 1;
+            points = 0;
+            pointsEl.textContent = points;
+            levelEl.textContent = level;
+            newGame(level);
+          }
+        }
+      }
+
+      function checkWin() {
+        const all = document.querySelectorAll("input.cell");
+        for (const i of all) if (!i.disabled) return;
+        stopTimer();
+        started = false;
+        const bonus = 500 + Math.max(0, 300 - seconds) * 5;
+        points += bonus;
+        pointsEl.textContent = points;
+        alert(
+          "Puzzle solved! Level " +
+            level +
+            " complete. Bonus: " +
+            bonus +
+            " points."
+        );
+        if (points > 0) {
+          const playerName =
+            prompt("Enter your name for the leaderboard:", "Player") ||
+            "Player";
+          saveLeaderboard(playerName, points, formatTime(seconds), level);
+        }
+        level++;
+        levelEl.textContent = level;
+        newGame(level);
+      }
+
+      // Leaderboard logic
+      function getLeaderboard() {
+        return JSON.parse(localStorage.getItem("speedokuLeaderboard") || "[]");
+      }
+
+      function saveLeaderboard(name, score, time, level) {
+        if (score > 0 && time) {
+          const lb = getLeaderboard();
+          lb.push({ name, score, time, level });
+          lb.sort((a, b) => b.score - a.score);
+          if (lb.length > 10) lb.length = 10;
+          localStorage.setItem("speedokuLeaderboard", JSON.stringify(lb));
+          renderLeaderboard();
+        }
+      }
+
+      function renderLeaderboard() {
+        const lb = getLeaderboard();
+        const ul = document.getElementById("leaderboardList");
+        ul.innerHTML = "";
+
+        lb.forEach((entry) => {
+          if (entry.score > 0 && entry.time) {
+            const li = document.createElement("li");
+
+            li.innerHTML = `
+        <strong>${entry.name}</strong>
+        <span>Score: ${entry.score} | Time: ${entry.time} | Level: ${entry.level}</span>
+      `;
+
+            ul.appendChild(li);
+          }
+        });
+      }
+
+      const resetLeaderboardBtn = document.getElementById(
+        "resetLeaderboardBtn"
+      );
+      resetLeaderboardBtn.addEventListener("click", () => {
+        if (confirm("Are you sure you want to reset the leaderboard?")) {
+          localStorage.removeItem("speedokuLeaderboard");
+          renderLeaderboard();
+        }
+      });
+
+      startBtn.addEventListener("click", () => {
+        if (!started) {
+          started = true;
+          setBoardEnabled(true); // unlock board
+          startTimer();
+        }
+      });
+
+      restartBtn.addEventListener("click", () => newGame(level));
+      quitBtn.addEventListener("click", () => {
+        if (confirm("Quit game and reset progress?")) {
+          level = 1;
+          points = 0;
+          levelEl.textContent = level;
+          pointsEl.textContent = points;
+          newGame(level);
+        }
+      });
+
+      renderLeaderboard();
+      newGame(1);
+    </script>
+  </body>
+</html>
